@@ -64,9 +64,6 @@ Check playbook syntax before running:
 
 ansible-playbook playbooks/nginx-deployment.yml --syntax-check
 
-Contact  7893775780
-
-Mail ID dodda.kiranmayi@wipro.com
 
 GitHub https://github.com/kiranmayi-repo/ansible-portfolio.git
 
@@ -74,6 +71,8 @@ GitHub https://github.com/kiranmayi-repo/ansible-portfolio.git
 ---
 
  
+
+
 
 
 

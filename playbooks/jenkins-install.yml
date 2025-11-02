@@ -1,0 +1,9 @@
+---
+- name: Install Jenkins on webservers
+  hosts: webservers
+  become: yes
+  vars:
+    ansible_roles_path: "../roles"
+  roles:
+    - jenkins
+
