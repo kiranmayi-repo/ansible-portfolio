@@ -11,3 +11,14 @@
     - configuration-as-code
   notify: restart jenkins
 
+---
+- name: Install Jenkins plugins
+  community.general.jenkins_plugin:
+    name: "{{ item }}"
+    state: present
+    url: "http://localhost:8080"
+  with_items: "{{ jenkins_plugins }}"
+  notify:
+    - restart jenkins
+  tags: plugins
+

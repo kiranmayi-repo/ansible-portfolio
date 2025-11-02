@@ -7,3 +7,8 @@
 - name: reload daemon
   command: systemctl daemon-reload
 
+- name: restart jenkins
+  service:
+    name: jenkins
+    state: restarted
+

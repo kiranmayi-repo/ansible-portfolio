@@ -1,0 +1,8 @@
+---
+jenkins_plugins:
+  - git
+  - workflow-aggregator
+  - blueocean
+  - credentials-binding
+  - docker-workflow
+
