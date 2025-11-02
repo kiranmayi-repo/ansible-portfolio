@@ -1,9 +1,8 @@
 ---
-- name: Install Jenkins on webservers
+- name: Install Jenkins on Ubuntu
   hosts: webservers
   become: yes
-  vars:
-    ansible_roles_path: "../roles"
+
   roles:
-    - jenkins
+    - role: ../roles/jenkins
 

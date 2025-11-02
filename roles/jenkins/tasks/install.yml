@@ -1,25 +1,39 @@
 ---
-# Install Java & Jenkins repo
 - name: Install Java (required for Jenkins)
   apt:
     name: openjdk-11-jdk
     state: present
   become: yes
 
-- name: Add Jenkins repo key
+- name: Add Jenkins repository key
   apt_key:
-    url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+    url: https://pkg.jenkins.io/debian/jenkins.io.key
     state: present
+  become: yes
 
-- name: Add Jenkins repo
-  apt_repository:
-    repo: "deb https://pkg.jenkins.io/debian-stable binary/"
-    state: present
+- name: Add Jenkins repository
+  template:
+    src: jenkins.repo.j2
+    dest: /etc/apt/sources.list.d/jenkins.list
+  notify: reload daemon
+  become: yes
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: yes
 
 - name: Install Jenkins
   apt:
     name: jenkins
-    state: latest
-    update_cache: yes
+    state: present
+  notify: restart jenkins
+  become: yes
+
+- name: Ensure Jenkins is started & enabled
+  service:
+    name: jenkins
+    state: started
+    enabled: yes
   become: yes
 
