@@ -1,29 +1,18 @@
 ---
-- name: Install and configure Nginx
+- name: Install and start NGINX on web servers
   hosts: webservers
   become: yes
 
   tasks:
-    - name: Install Nginx
+    - name: Install NGINX
       apt:
         name: nginx
         state: present
-      when: ansible_os_family == "Debian"
+        update_cache: yes
 
-    - name: Start Nginx service
-      service:
+    - name: Start and enable NGINX
+      systemd:
         name: nginx
         state: started
         enabled: yes
 
-Explanation of this playbook:
-
-hosts: webservers → This playbook will run on hosts in the webservers group (defined in your inventory).
-
-become: yes → Runs tasks as root (sudo).
-
-Tasks:
-
-Install Nginx (only if the OS is Debian/Ubuntu).
-
-Start and enable the Nginx service.
