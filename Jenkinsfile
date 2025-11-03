@@ -7,7 +7,7 @@ pipeline {
 
   stages {
 
-    stage('Checkout') {
+    stage('Checkout Repo') {
       steps {
         git branch: 'main', url: 'https://github.com/kiranmayi-repo/ansible-portfolio.git'
       }
@@ -16,31 +16,27 @@ pipeline {
     stage('Install unzip if missing') {
       steps {
         sh '''
-        set -e
         if ! command -v unzip >/dev/null; then
-          echo "Installing unzip"
-          apt-get update -y
-          apt-get install -y unzip
+          echo "Installing unzip..."
+          apt-get update -y || true
+          apt-get install -y unzip || true
         fi
         '''
       }
     }
 
-    stage('Install Terraform (user space)') {
+    stage('Install Terraform (no sudo)') {
       steps {
         sh '''
-        set -e
         cd /tmp
 
-        if [ ! -f terraform ]; then
-          echo "Downloading Terraform..."
-          wget -q https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
-          unzip -o terraform_1.6.0_linux_amd64.zip
+        if [ ! -f "terraform" ]; then
+          wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip -O terraform.zip
+          unzip terraform.zip
+          chmod +x terraform
         fi
 
-        chmod +x terraform
-        export PATH=$PATH:/tmp
-        terraform version
+        terraform -version
         '''
       }
     }
@@ -48,8 +44,8 @@ pipeline {
     stage('Terraform Init') {
       steps {
         sh '''
-        export PATH=$PATH:/tmp
-        terraform init
+        cd terraform
+        /tmp/terraform init
         '''
       }
     }
@@ -57,8 +53,8 @@ pipeline {
     stage('Terraform Validate') {
       steps {
         sh '''
-        export PATH=$PATH:/tmp
-        terraform validate
+        cd terraform
+        /tmp/terraform validate
         '''
       }
     }
@@ -66,8 +62,8 @@ pipeline {
     stage('Terraform Plan') {
       steps {
         sh '''
-        export PATH=$PATH:/tmp
-        terraform plan
+        cd terraform
+        /tmp/terraform plan
         '''
       }
     }
@@ -75,8 +71,8 @@ pipeline {
     stage('Terraform Apply') {
       steps {
         sh '''
-        export PATH=$PATH:/tmp
-        terraform apply -auto-approve
+        cd terraform
+        /tmp/terraform apply -auto-approve
         '''
       }
     }
@@ -84,10 +80,9 @@ pipeline {
     stage('Ansible Deployment') {
       steps {
         sh '''
-        ansible-playbook -i inventory/dev playbooks/jenkins-install.yml
+        ansible-playbook -i inventory/dev playbooks/nginx-deployment.yml
         '''
       }
     }
-
   }
 }
