@@ -3,54 +3,64 @@ pipeline {
 
     environment {
         TF_VERSION = "1.6.0"
+        PATH = "$PATH:/usr/local/bin"
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Install Terraform') {
+        stage ('Install Terraform') {
             steps {
                 sh '''
-                if ! command -v terraform &> /dev/null; then
-                  wget https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-                  unzip terraform_${TF_VERSION}_linux_amd64.zip
-                  sudo mv terraform /usr/local/bin/
+                if ! command -v terraform &> /dev/null
+                then
+                    echo "Terraform not found, installing..."
+                    wget https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+                    unzip terraform_${TF_VERSION}_linux_amd64.zip
+                    sudo mv terraform /usr/local/bin/
+                else
+                    echo "Terraform already installed"
                 fi
-                terraform version
                 '''
             }
         }
 
         stage('Terraform Init') {
             steps {
-                sh "terraform init"
+                sh '''
+                terraform init
+                '''
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh "terraform validate"
+                sh '''
+                terraform validate
+                '''
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh "terraform plan -out=plan.out"
+                sh '''
+                terraform plan
+                '''
             }
         }
 
         stage('Terraform Apply') {
             when {
-                branch 'main'
+                expression { return params.APPLY == true }
             }
             steps {
-                input message: "Approve Terraform Apply?"
-                sh "terraform apply -auto-approve plan.out"
+                sh '''
+                terraform apply -auto-approve
+                '''
             }
         }
     }
+
+    parameters {
+        booleanParam(name: 'APPLY', defaultValue: false, description: 'Apply Terraform changes?')
+    }
 }
+
