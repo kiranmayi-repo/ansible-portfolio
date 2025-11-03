@@ -2,37 +2,45 @@ pipeline {
   agent any
 
   environment {
-    TF_VERSION = "1.6.0"
     PATH = "$PATH:/tmp"
   }
 
   stages {
-    stage('Checkout Code') {
+
+    stage('Checkout') {
       steps {
         git branch: 'main', url: 'https://github.com/kiranmayi-repo/ansible-portfolio.git'
       }
     }
 
-    stage('Prepare tools (no sudo)') {
+    stage('Install unzip if missing') {
       steps {
         sh '''
-        set -euo pipefail
-
-        # install unzip if not present
-        if ! command -v unzip >/dev/null 2>&1; then
-          apt-get update -y || true
-          apt-get install -y unzip || true
+        set -e
+        if ! command -v unzip >/dev/null; then
+          echo "Installing unzip"
+          apt-get update -y
+          apt-get install -y unzip
         fi
+        '''
+      }
+    }
 
-        # download Terraform binary
+    stage('Install Terraform (user space)') {
+      steps {
+        sh '''
+        set -e
         cd /tmp
+
         if [ ! -f terraform ]; then
-          wget -q https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
-          unzip terraform_${TF_VERSION}_linux_amd64.zip
-          chmod +x terraform
+          echo "Downloading Terraform..."
+          wget -q https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+          unzip -o terraform_1.6.0_linux_amd64.zip
         fi
 
-        terraform -version
+        chmod +x terraform
+        export PATH=$PATH:/tmp
+        terraform version
         '''
       }
     }
@@ -40,8 +48,8 @@ pipeline {
     stage('Terraform Init') {
       steps {
         sh '''
-        cd terraform
-        /tmp/terraform init
+        export PATH=$PATH:/tmp
+        terraform init
         '''
       }
     }
@@ -49,8 +57,8 @@ pipeline {
     stage('Terraform Validate') {
       steps {
         sh '''
-        cd terraform
-        /tmp/terraform validate
+        export PATH=$PATH:/tmp
+        terraform validate
         '''
       }
     }
@@ -58,8 +66,8 @@ pipeline {
     stage('Terraform Plan') {
       steps {
         sh '''
-        cd terraform
-        /tmp/terraform plan -out plan.tfplan
+        export PATH=$PATH:/tmp
+        terraform plan
         '''
       }
     }
@@ -67,20 +75,19 @@ pipeline {
     stage('Terraform Apply') {
       steps {
         sh '''
-        cd terraform
-        /tmp/terraform apply -auto-approve plan.tfplan
+        export PATH=$PATH:/tmp
+        terraform apply -auto-approve
         '''
       }
     }
 
-    stage('Run Ansible Playbook') {
+    stage('Ansible Deployment') {
       steps {
         sh '''
         ansible-playbook -i inventory/dev playbooks/jenkins-install.yml
-        ansible-playbook -i inventory/dev playbooks/nginx-deployment.yml
         '''
       }
     }
+
   }
 }
-
